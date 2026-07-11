@@ -10,6 +10,7 @@ export async function POST(_request: NextRequest, { params }: Params) {
   const product = await prisma.product.findUnique({
     where: { id },
     select: {
+      type: true,
       url: true,
       priceEntries: { orderBy: { checkedAt: "desc" }, take: 1 },
     },
@@ -17,6 +18,13 @@ export async function POST(_request: NextRequest, { params }: Params) {
 
   if (!product) {
     return NextResponse.json({ error: "Producto no encontrado" }, { status: 404 });
+  }
+
+  if (product.type !== "ONLINE" || !product.url) {
+    return NextResponse.json(
+      { error: "Este producto es de tienda física, no se puede revisar el precio automáticamente" },
+      { status: 400 },
+    );
   }
 
   const result = await scrapeProduct(product.url);

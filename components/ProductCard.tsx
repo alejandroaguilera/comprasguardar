@@ -2,8 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { ImageOff } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { TrendBadge } from "@/components/TrendBadge";
+import { StoreBadge } from "@/components/StoreBadge";
 import { CheckPriceButton } from "@/components/CheckPriceButton";
 import { ArchiveButton } from "@/components/ArchiveButton";
 import { DeleteButton } from "@/components/DeleteButton";
@@ -13,6 +13,7 @@ import { getProductImageSrc } from "@/lib/product-image";
 type ProductCardProps = {
   product: {
     id: string;
+    type: "ONLINE" | "IN_STORE";
     name: string;
     imageUrl: string | null;
     hasCustomImage: boolean;
@@ -49,9 +50,7 @@ export function ProductCard({ product }: ProductCardProps) {
         )}
       </div>
       <CardHeader className="gap-1 pb-0">
-        <Badge variant="secondary" className="w-fit">
-          {product.store}
-        </Badge>
+        <StoreBadge type={product.type} store={product.store} className="w-fit" />
         <Link href={`/products/${product.id}`} className="line-clamp-2 font-medium hover:underline">
           {product.name}
         </Link>
@@ -75,7 +74,7 @@ export function ProductCard({ product }: ProductCardProps) {
           </>
         ) : (
           <>
-            <CheckPriceButton productId={product.id} />
+            {product.type === "ONLINE" && <CheckPriceButton productId={product.id} />}
             <ArchiveButton productId={product.id} archived={product.archived} />
           </>
         )}

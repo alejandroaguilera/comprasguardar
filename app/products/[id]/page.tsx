@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { productSelect } from "@/lib/product-select";
 import { getProductImageSrc } from "@/lib/product-image";
 import { Badge } from "@/components/ui/badge";
+import { StoreBadge } from "@/components/StoreBadge";
 import {
   Table,
   TableBody,
@@ -82,19 +83,19 @@ export default async function ProductDetailPage({ params }: Params) {
         </div>
 
         <div className="flex flex-1 flex-col gap-3">
-          <Badge variant="secondary" className="w-fit">
-            {product.store}
-          </Badge>
+          <StoreBadge type={product.type} store={product.store} className="w-fit" />
           <h1 className="text-2xl font-semibold">{product.name}</h1>
-          <a
-            href={product.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex w-fit items-center gap-1 text-sm text-neutral-500 hover:underline dark:text-neutral-400"
-          >
-            Ver en la tienda
-            <ExternalLink className="size-3.5" />
-          </a>
+          {product.url && (
+            <a
+              href={product.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex w-fit items-center gap-1 text-sm text-neutral-500 hover:underline dark:text-neutral-400"
+            >
+              Ver en la tienda
+              <ExternalLink className="size-3.5" />
+            </a>
+          )}
 
           <div className="flex items-center gap-3">
             <span className="text-3xl font-semibold">
@@ -111,7 +112,7 @@ export default async function ProductDetailPage({ params }: Params) {
           </p>
 
           <div className="mt-2 flex flex-wrap gap-2">
-            <CheckPriceButton productId={product.id} />
+            {product.type === "ONLINE" && <CheckPriceButton productId={product.id} />}
             <AddManualPriceForm productId={product.id} />
             <ArchiveButton productId={product.id} archived={product.archived} />
             <DeleteButton productId={product.id} />

@@ -1,5 +1,6 @@
 export const productSelect = {
   id: true,
+  type: true,
   url: true,
   name: true,
   nameSource: true,

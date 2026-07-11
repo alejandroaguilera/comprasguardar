@@ -7,9 +7,11 @@ import { productSelect } from "@/lib/product-select";
 export async function GET(request: NextRequest) {
   const archivedParam = request.nextUrl.searchParams.get("archived");
   const archived = archivedParam === "true";
+  const typeParam = request.nextUrl.searchParams.get("type");
+  const type = typeParam === "ONLINE" || typeParam === "IN_STORE" ? typeParam : undefined;
 
   const products = await prisma.product.findMany({
-    where: { archived },
+    where: { archived, ...(type ? { type } : {}) },
     orderBy: { createdAt: "desc" },
     select: {
       ...productSelect,
@@ -23,8 +25,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json(products);
 }
 
-const createSchema = z.object({
-  url: z.string().url(),
+const commonFields = {
   name: z.string().min(1),
   nameSource: z.enum(["AUTO", "MANUAL"]),
   price: z.number().positive(),
@@ -32,7 +33,12 @@ const createSchema = z.object({
   currency: z.enum(CURRENCY_CODES as [string, ...string[]]).default("USD"),
   imageUrl: z.string().url().nullable().optional(),
   store: z.string().min(1),
-});
+};
+
+const createSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("ONLINE"), url: z.string().url(), ...commonFields }),
+  z.object({ type: z.literal("IN_STORE"), ...commonFields }),
+]);
 
 export async function POST(request: NextRequest) {
   const parsed = createSchema.safeParse(await request.json().catch(() => null));
@@ -40,18 +46,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { url, name, nameSource, price, priceSource, currency, imageUrl, store } = parsed.data;
+  const { type, name, nameSource, price, priceSource, currency, imageUrl, store } = parsed.data;
+  const url = parsed.data.type === "ONLINE" ? parsed.data.url : null;
 
   try {
     const product = await prisma.product.create({
       data: {
+        type,
         url,
         name,
         nameSource,
         currency,
         imageUrl: imageUrl ?? null,
         store,
-        lastCheckedAt: new Date(),
+        lastCheckedAt: type === "ONLINE" ? new Date() : null,
         priceEntries: {
           create: { price, source: priceSource },
         },

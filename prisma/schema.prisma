@@ -12,9 +12,15 @@ enum DataSource {
   MANUAL
 }
 
+enum ProductType {
+  ONLINE
+  IN_STORE
+}
+
 model Product {
   id            String       @id @default(cuid())
-  url           String       @unique
+  type          ProductType  @default(ONLINE)
+  url           String?      @unique
   name          String
   nameSource    DataSource   @default(MANUAL)
   imageUrl      String?
@@ -30,6 +36,7 @@ model Product {
   priceEntries  PriceEntry[]
 
   @@index([archived, createdAt])
+  @@index([type])
 }
 
 model PriceEntry {
