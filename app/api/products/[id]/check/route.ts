@@ -9,7 +9,10 @@ export async function POST(_request: NextRequest, { params }: Params) {
 
   const product = await prisma.product.findUnique({
     where: { id },
-    include: { priceEntries: { orderBy: { checkedAt: "desc" }, take: 1 } },
+    select: {
+      url: true,
+      priceEntries: { orderBy: { checkedAt: "desc" }, take: 1 },
+    },
   });
 
   if (!product) {

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { productSelect } from "@/lib/product-select";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/ProductCard";
 
@@ -10,7 +11,8 @@ export default async function DashboardPage() {
   const products = await prisma.product.findMany({
     where: { archived: false },
     orderBy: { createdAt: "desc" },
-    include: {
+    select: {
+      ...productSelect,
       priceEntries: {
         orderBy: { checkedAt: "desc" },
         take: 2,

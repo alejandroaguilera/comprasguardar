@@ -18,6 +18,9 @@ model Product {
   name          String
   nameSource    DataSource   @default(MANUAL)
   imageUrl      String?
+  hasCustomImage Boolean     @default(false)
+  imageData     Bytes?
+  imageMimeType String?
   store         String
   currency      String       @default("USD")
   archived      Boolean      @default(false)

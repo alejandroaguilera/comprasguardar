@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink, ImageOff } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { productSelect } from "@/lib/product-select";
+import { getProductImageSrc } from "@/lib/product-image";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -18,6 +20,7 @@ import { CheckPriceButton } from "@/components/CheckPriceButton";
 import { AddManualPriceForm } from "@/components/AddManualPriceForm";
 import { ArchiveButton } from "@/components/ArchiveButton";
 import { DeleteButton } from "@/components/DeleteButton";
+import { ChangeImageForm } from "@/components/ChangeImageForm";
 import { formatDate, formatPrice } from "@/lib/format";
 
 type Params = { params: Promise<{ id: string }> };
@@ -29,10 +32,15 @@ export default async function ProductDetailPage({ params }: Params) {
 
   const product = await prisma.product.findUnique({
     where: { id },
-    include: { priceEntries: { orderBy: { checkedAt: "asc" } } },
+    select: {
+      ...productSelect,
+      priceEntries: { orderBy: { checkedAt: "asc" } },
+    },
   });
 
   if (!product) notFound();
+
+  const imageSrc = getProductImageSrc(product);
 
   const entries = product.priceEntries.map((entry) => ({
     price: Number(entry.price),
@@ -53,14 +61,24 @@ export default async function ProductDetailPage({ params }: Params) {
       </Link>
 
       <div className="flex flex-col gap-6 sm:flex-row">
-        <div className="relative aspect-square w-full shrink-0 rounded-xl bg-neutral-100 sm:w-56 dark:bg-neutral-800">
-          {product.imageUrl ? (
-            <Image src={product.imageUrl} alt={product.name} fill sizes="224px" className="object-contain p-4" />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-neutral-400">
-              <ImageOff className="size-10" />
-            </div>
-          )}
+        <div className="flex shrink-0 flex-col gap-2 sm:w-56">
+          <div className="relative aspect-square w-full rounded-xl bg-neutral-100 dark:bg-neutral-800">
+            {imageSrc ? (
+              <Image
+                src={imageSrc}
+                alt={product.name}
+                fill
+                sizes="224px"
+                className="object-contain p-4"
+                unoptimized={product.hasCustomImage}
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-neutral-400">
+                <ImageOff className="size-10" />
+              </div>
+            )}
+          </div>
+          <ChangeImageForm productId={product.id} hasImage={imageSrc !== null} />
         </div>
 
         <div className="flex flex-1 flex-col gap-3">

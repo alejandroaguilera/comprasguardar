@@ -16,7 +16,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const product = await prisma.product.findUnique({ where: { id } });
+  const product = await prisma.product.findUnique({ where: { id }, select: { id: true } });
   if (!product) {
     return NextResponse.json({ error: "Producto no encontrado" }, { status: 404 });
   }

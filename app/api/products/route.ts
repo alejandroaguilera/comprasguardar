@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { CURRENCY_CODES } from "@/lib/currencies";
+import { productSelect } from "@/lib/product-select";
 
 export async function GET(request: NextRequest) {
   const archivedParam = request.nextUrl.searchParams.get("archived");
@@ -9,7 +11,8 @@ export async function GET(request: NextRequest) {
   const products = await prisma.product.findMany({
     where: { archived },
     orderBy: { createdAt: "desc" },
-    include: {
+    select: {
+      ...productSelect,
       priceEntries: {
         orderBy: { checkedAt: "desc" },
         take: 2,
@@ -26,7 +29,7 @@ const createSchema = z.object({
   nameSource: z.enum(["AUTO", "MANUAL"]),
   price: z.number().positive(),
   priceSource: z.enum(["AUTO", "MANUAL"]),
-  currency: z.string().min(1).default("USD"),
+  currency: z.enum(CURRENCY_CODES as [string, ...string[]]).default("USD"),
   imageUrl: z.string().url().nullable().optional(),
   store: z.string().min(1),
 });
@@ -53,7 +56,7 @@ export async function POST(request: NextRequest) {
           create: { price, source: priceSource },
         },
       },
-      include: { priceEntries: true },
+      select: { ...productSelect, priceEntries: true },
     });
     return NextResponse.json(product, { status: 201 });
   } catch (err: unknown) {

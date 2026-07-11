@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Select } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import { CURRENCIES, isKnownCurrency } from "@/lib/currencies";
 
 type ScrapeResult = {
   name: string | null;
@@ -40,6 +42,8 @@ export function AddProductForm() {
   const [price, setPrice] = useState("");
   const [priceSource, setPriceSource] = useState<"AUTO" | "MANUAL">("MANUAL");
   const [currency, setCurrency] = useState("USD");
+  const [imageUrl, setImageUrl] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleFetch(event: FormEvent) {
     event.preventDefault();
@@ -64,7 +68,8 @@ export function AddProductForm() {
     setNameSource(data.nameSource);
     setPrice(data.price !== null ? String(data.price) : "");
     setPriceSource(data.priceSource);
-    setCurrency(data.currency);
+    setCurrency(isKnownCurrency(data.currency) ? data.currency : "USD");
+    setImageUrl(data.imageUrl ?? "");
     setStep("confirm");
     setLoading(false);
   }
@@ -73,6 +78,8 @@ export function AddProductForm() {
     event.preventDefault();
     setLoading(true);
     setError(null);
+
+    const file = fileInputRef.current?.files?.[0];
 
     const res = await fetch("/api/products", {
       method: "POST",
@@ -84,7 +91,7 @@ export function AddProductForm() {
         price: Number(price),
         priceSource,
         currency,
-        imageUrl: preview?.imageUrl ?? undefined,
+        imageUrl: file ? undefined : imageUrl.trim() || undefined,
         store: preview?.store ?? "Desconocido",
       }),
     });
@@ -94,6 +101,14 @@ export function AddProductForm() {
       setError(typeof data.error === "string" ? data.error : "No se pudo guardar el producto");
       setLoading(false);
       return;
+    }
+
+    const product = await res.json();
+
+    if (file) {
+      const formData = new FormData();
+      formData.set("file", file);
+      await fetch(`/api/products/${product.id}/image`, { method: "POST", body: formData });
     }
 
     router.push("/");
@@ -174,12 +189,33 @@ export function AddProductForm() {
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="product-currency">Moneda</Label>
-              <Input
+              <Select
                 id="product-currency"
                 value={currency}
-                onChange={(e) => setCurrency(e.target.value.toUpperCase())}
-              />
+                onChange={(e) => setCurrency(e.target.value)}
+              >
+                {CURRENCIES.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.label}
+                  </option>
+                ))}
+              </Select>
             </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="product-image-url">Imagen (URL)</Label>
+            <Input
+              id="product-image-url"
+              type="url"
+              placeholder="https://..."
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="product-image-file">o sube un archivo</Label>
+            <Input id="product-image-file" type="file" accept="image/*" ref={fileInputRef} />
           </div>
 
           <p className="text-xs text-neutral-500 dark:text-neutral-400">Tienda: {preview?.store}</p>

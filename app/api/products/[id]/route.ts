@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { productSelect } from "@/lib/product-select";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -9,7 +10,8 @@ export async function GET(_request: NextRequest, { params }: Params) {
 
   const product = await prisma.product.findUnique({
     where: { id },
-    include: {
+    select: {
+      ...productSelect,
       priceEntries: { orderBy: { checkedAt: "asc" } },
     },
   });
@@ -24,6 +26,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
 const patchSchema = z.object({
   name: z.string().min(1).optional(),
   archived: z.boolean().optional(),
+  imageUrl: z.string().url().nullable().optional(),
 });
 
 export async function PATCH(request: NextRequest, { params }: Params) {
@@ -33,9 +36,18 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
+  const { imageUrl, ...rest } = parsed.data;
+  const isSettingImageUrl = imageUrl !== undefined;
+
   const product = await prisma.product.update({
     where: { id },
-    data: parsed.data,
+    data: {
+      ...rest,
+      ...(isSettingImageUrl
+        ? { imageUrl, hasCustomImage: false, imageData: null, imageMimeType: null }
+        : {}),
+    },
+    select: productSelect,
   });
 
   return NextResponse.json(product);

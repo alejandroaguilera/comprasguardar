@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { productSelect } from "@/lib/product-select";
 import { ProductCard } from "@/components/ProductCard";
 
 export const dynamic = "force-dynamic";
@@ -7,7 +8,8 @@ export default async function ArchivedPage() {
   const products = await prisma.product.findMany({
     where: { archived: true },
     orderBy: { updatedAt: "desc" },
-    include: {
+    select: {
+      ...productSelect,
       priceEntries: {
         orderBy: { checkedAt: "desc" },
         take: 2,
