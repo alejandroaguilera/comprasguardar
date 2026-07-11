@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DataSource {
+  AUTO
+  MANUAL
+}
+
+model Product {
+  id            String       @id @default(cuid())
+  url           String       @unique
+  name          String
+  nameSource    DataSource   @default(MANUAL)
+  imageUrl      String?
+  store         String
+  currency      String       @default("USD")
+  archived      Boolean      @default(false)
+  lastCheckedAt DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  priceEntries  PriceEntry[]
+
+  @@index([archived, createdAt])
+}
+
+model PriceEntry {
+  id        String     @id @default(cuid())
+  productId String
+  product   Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  price     Decimal    @db.Decimal(10, 2)
+  source    DataSource @default(MANUAL)
+  checkedAt DateTime   @default(now())
+  createdAt DateTime   @default(now())
+
+  @@index([productId, checkedAt])
+}
