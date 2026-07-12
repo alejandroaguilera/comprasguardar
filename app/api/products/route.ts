@@ -50,22 +50,29 @@ export async function POST(request: NextRequest) {
   const url = parsed.data.type === "ONLINE" ? parsed.data.url : null;
 
   try {
-    const product = await prisma.product.create({
-      data: {
-        type,
-        url,
-        name,
-        nameSource,
-        currency,
-        imageUrl: imageUrl ?? null,
-        store,
-        lastCheckedAt: type === "ONLINE" ? new Date() : null,
-        priceEntries: {
-          create: { price, source: priceSource },
+    const [product] = await prisma.$transaction([
+      prisma.product.create({
+        data: {
+          type,
+          url,
+          name,
+          nameSource,
+          currency,
+          imageUrl: imageUrl ?? null,
+          store,
+          lastCheckedAt: type === "ONLINE" ? new Date() : null,
+          priceEntries: {
+            create: { price, source: priceSource },
+          },
         },
-      },
-      select: { ...productSelect, priceEntries: true },
-    });
+        select: { ...productSelect, priceEntries: true },
+      }),
+      prisma.store.upsert({
+        where: { name: store },
+        create: { name: store },
+        update: {},
+      }),
+    ]);
     return NextResponse.json(product, { status: 201 });
   } catch (err: unknown) {
     if (typeof err === "object" && err !== null && "code" in err && err.code === "P2002") {

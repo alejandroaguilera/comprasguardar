@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
+import { StoreField } from "@/components/StoreField";
 import { CURRENCIES, isKnownCurrency } from "@/lib/currencies";
 import { createProductWithImage } from "@/lib/save-product";
 
@@ -42,6 +43,7 @@ export function OnlineProductForm({ onBack }: { onBack: () => void }) {
   const [price, setPrice] = useState("");
   const [priceSource, setPriceSource] = useState<"AUTO" | "MANUAL">("MANUAL");
   const [currency, setCurrency] = useState("USD");
+  const [store, setStore] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -69,6 +71,7 @@ export function OnlineProductForm({ onBack }: { onBack: () => void }) {
     setPrice(data.price !== null ? String(data.price) : "");
     setPriceSource(data.priceSource);
     setCurrency(isKnownCurrency(data.currency) ? data.currency : "USD");
+    setStore(data.store);
     setImageUrl(data.imageUrl ?? "");
     setStep("confirm");
     setLoading(false);
@@ -91,7 +94,7 @@ export function OnlineProductForm({ onBack }: { onBack: () => void }) {
         priceSource,
         currency,
         imageUrl: file ? undefined : imageUrl.trim() || undefined,
-        store: preview?.store ?? "Desconocido",
+        store: store.trim(),
       },
       file,
     );
@@ -204,7 +207,10 @@ export function OnlineProductForm({ onBack }: { onBack: () => void }) {
         <Input id="product-image-file" type="file" accept="image/*" ref={fileInputRef} />
       </div>
 
-      <p className="text-xs text-neutral-500 dark:text-neutral-400">Tienda: {preview?.store}</p>
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="product-store">Tienda</Label>
+        <StoreField id="product-store" value={store} onChange={setStore} required />
+      </div>
 
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 

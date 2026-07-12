@@ -6,23 +6,26 @@ import { ProductFilters } from "@/components/ProductFilters";
 
 export const dynamic = "force-dynamic";
 
-type Props = { searchParams: Promise<{ q?: string; type?: string }> };
+type Props = { searchParams: Promise<{ q?: string; type?: string; store?: string }> };
 
 export default async function ArchivedPage({ searchParams }: Props) {
   const params = await searchParams;
-  const hasFilters = Boolean(params.q || params.type);
+  const hasFilters = Boolean(params.q || params.type || params.store);
 
-  const products = await prisma.product.findMany({
-    where: buildProductWhere(true, params),
-    orderBy: { updatedAt: "desc" },
-    select: {
-      ...productSelect,
-      priceEntries: {
-        orderBy: { checkedAt: "desc" },
-        take: 2,
+  const [products, stores] = await Promise.all([
+    prisma.product.findMany({
+      where: buildProductWhere(true, params),
+      orderBy: { updatedAt: "desc" },
+      select: {
+        ...productSelect,
+        priceEntries: {
+          orderBy: { checkedAt: "desc" },
+          take: 2,
+        },
       },
-    },
-  });
+    }),
+    prisma.store.findMany({ orderBy: { name: "asc" }, select: { name: true } }),
+  ]);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -33,7 +36,7 @@ export default async function ArchivedPage({ searchParams }: Props) {
         </p>
       </div>
 
-      <ProductFilters />
+      <ProductFilters stores={stores.map((s) => s.name)} />
 
       {products.length === 0 ? (
         <div className="rounded-xl border border-dashed border-neutral-300 py-16 text-center dark:border-neutral-700">

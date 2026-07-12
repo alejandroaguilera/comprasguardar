@@ -6,7 +6,7 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 
-export function ProductFilters() {
+export function ProductFilters({ stores = [] }: { stores?: string[] }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -14,7 +14,7 @@ export function ProductFilters() {
   const [query, setQuery] = useState(searchParams.get("q") ?? "");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  function updateParams(next: { q?: string; type?: string }) {
+  function updateParams(next: { q?: string; type?: string; store?: string }) {
     const params = new URLSearchParams(searchParams.toString());
     for (const [key, value] of Object.entries(next)) {
       if (value) params.set(key, value);
@@ -53,6 +53,18 @@ export function ProductFilters() {
         <option value="">Todos los tipos</option>
         <option value="ONLINE">En línea</option>
         <option value="IN_STORE">En tienda</option>
+      </Select>
+      <Select
+        value={searchParams.get("store") ?? ""}
+        onChange={(e) => updateParams({ store: e.target.value })}
+        className="sm:w-56"
+      >
+        <option value="">Todas las tiendas</option>
+        {stores.map((name) => (
+          <option key={name} value={name}>
+            {name}
+          </option>
+        ))}
       </Select>
     </div>
   );

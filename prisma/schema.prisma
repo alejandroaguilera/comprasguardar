@@ -17,6 +17,12 @@ enum ProductType {
   IN_STORE
 }
 
+model Store {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+}
+
 model Product {
   id            String       @id @default(cuid())
   type          ProductType  @default(ONLINE)

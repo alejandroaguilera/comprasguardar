@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { StoreField } from "@/components/StoreField";
 import { CURRENCIES } from "@/lib/currencies";
 import { createProductWithImage } from "@/lib/save-product";
 
@@ -36,7 +37,7 @@ export function InStoreProductForm({ onBack }: { onBack: () => void }) {
         priceSource: "MANUAL",
         currency,
         imageUrl: file ? undefined : imageUrl.trim() || undefined,
-        store: store.trim() || "Tienda física",
+        store: store.trim(),
       },
       file,
     );
@@ -85,13 +86,7 @@ export function InStoreProductForm({ onBack }: { onBack: () => void }) {
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="instore-store">Tienda</Label>
-        <Input
-          id="instore-store"
-          required
-          placeholder="Ej. Walmart, Costco, tienda local..."
-          value={store}
-          onChange={(e) => setStore(e.target.value)}
-        />
+        <StoreField id="instore-store" value={store} onChange={setStore} required />
       </div>
 
       <div className="flex flex-col gap-2">
